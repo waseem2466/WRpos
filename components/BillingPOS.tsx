@@ -194,24 +194,74 @@ export const BillingPOS: React.FC = () => {
 
   if (successBill) {
     return (
-      <GlassCard className="max-w-md mx-auto text-center py-12">
-        <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-          <ShoppingCart size={32} />
+      <>
+        {/* Print-friendly bill section (hidden on screen, visible on print) */}
+        <div className="hidden print:block print:p-8 print:bg-white print:text-black print:max-w-lg print:mx-auto print:rounded print:shadow-lg">
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-bold">WR Smile & Supplies</h2>
+            <div className="text-sm">Shop Contact: 0719336848</div>
+            <div className="text-xs">Cloud Edition v1.0</div>
+          </div>
+          <div className="flex justify-between mb-2 text-sm">
+            <div>Bill No: <b>{successBill.invoiceNumber}</b></div>
+            <div>Date: <b>{new Date(successBill.date).toLocaleDateString()}</b></div>
+          </div>
+          <div className="mb-2 text-sm">Customer: <b>{successBill.customerName}</b></div>
+          <table className="w-full text-xs border-t border-b border-black mb-2">
+            <thead>
+              <tr className="border-b border-black">
+                <th className="py-1 text-left">Item</th>
+                <th className="py-1 text-center">Qty</th>
+                <th className="py-1 text-right">Price</th>
+                <th className="py-1 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {successBill.items.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="py-1">{item.name}</td>
+                  <td className="py-1 text-center">{item.quantity}</td>
+                  <td className="py-1 text-right">{item.price.toLocaleString()}</td>
+                  <td className="py-1 text-right">{(item.price * item.quantity).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Subtotal:</span>
+            <span>LKR {successBill.subtotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Discount:</span>
+            <span>LKR {successBill.discount.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-lg font-bold border-t border-black pt-1 mb-2">
+            <span>Total:</span>
+            <span>LKR {successBill.total.toLocaleString()}</span>
+          </div>
+          <div className="text-center text-xs mt-4">Thank you for your purchase!</div>
         </div>
-        <h2 className="text-2xl font-bold mb-2">Sale Complete!</h2>
-        <p className="text-gray-400 mb-8">Bill #{successBill.invoiceNumber} has been saved.</p>
-        <div className="flex gap-4 justify-center">
-          <GlassButton onClick={() => window.print()} className="flex items-center gap-2">
-            <Printer size={16} /> Print
-          </GlassButton>
-          <GlassButton onClick={shareOnWhatsApp} className="flex items-center gap-2 bg-[#25D366]/80 hover:bg-[#25D366]/60">
-            <Share2 size={16} /> WhatsApp
-          </GlassButton>
-        </div>
-        <button onClick={() => setSuccessBill(null)} className="mt-8 text-sm text-gray-400 hover:text-white underline">
-          Start New Sale
-        </button>
-      </GlassCard>
+
+        {/* On-screen success card (hidden on print) */}
+        <GlassCard className="max-w-md mx-auto text-center py-12 print:hidden">
+          <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingCart size={32} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Sale Complete!</h2>
+          <p className="text-gray-400 mb-8">Bill #{successBill.invoiceNumber} has been saved.</p>
+          <div className="flex gap-4 justify-center">
+            <GlassButton onClick={() => window.print()} className="flex items-center gap-2">
+              <Printer size={16} /> Print
+            </GlassButton>
+            <GlassButton onClick={shareOnWhatsApp} className="flex items-center gap-2 bg-[#25D366]/80 hover:bg-[#25D366]/60">
+              <Share2 size={16} /> WhatsApp
+            </GlassButton>
+          </div>
+          <button onClick={() => setSuccessBill(null)} className="mt-8 text-sm text-gray-400 hover:text-white underline">
+            Start New Sale
+          </button>
+        </GlassCard>
+      </>
     );
   }
 

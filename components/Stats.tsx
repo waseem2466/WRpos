@@ -16,9 +16,22 @@ export const Stats: React.FC = () => {
     totalProfit: 0,
     pendingLoans: 0
   });
+  const [dbTest, setDbTest] = useState<{ status: 'idle' | 'success' | 'error', message: string }>({ status: 'idle', message: '' });
 
   useEffect(() => {
     const loadData = async () => {
+      try {
+        // DB connection test: try to fetch products
+        const products = await db.products.getAll();
+        if (products && products.length > 0) {
+          setDbTest({ status: 'success', message: `Database connected. (${products.length} products found)` });
+        } else {
+          setDbTest({ status: 'success', message: 'Database connected, but no products found.' });
+        }
+      } catch (err) {
+        setDbTest({ status: 'error', message: 'Database connection failed!' });
+      }
+      // ...existing code...
       const allBills = await db.bills.getAll();
       const customers = await db.customers.getAll();
       setBills(allBills);
@@ -47,6 +60,12 @@ export const Stats: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Database connection test message */}
+      {dbTest.status !== 'idle' && (
+        <div className={`p-3 rounded-lg mb-2 text-sm font-semibold ${dbTest.status === 'success' ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'}`}>
+          {dbTest.message}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
