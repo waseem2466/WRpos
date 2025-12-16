@@ -6,6 +6,11 @@ import { db, generateId } from '../services/mockDb';
 import { Product, Customer, BillItem, Bill } from '../types';
 import { Search, ShoppingCart, Trash, User, Printer, Share2, Plus, X, Save, PackagePlus } from 'lucide-react';
 
+// Shop Configuration
+const SHOP_LOGO_URL = 'https://res.cloudinary.com/wrsmile/image/upload/v1765612669/wr_smile_supplies_products/hkp1yeb4c2vcjxzvsenh.webp';
+const SHOP_WHATSAPP_NUMBER = '+94719336848';
+const SHOP_CONTACT = '0719336848';
+
 export const BillingPOS: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -177,17 +182,64 @@ export const BillingPOS: React.FC = () => {
     await loadData();
   };
 
+  // Get customer phone number for WhatsApp
+  const getCustomerPhone = () => {
+    if (!successBill || !successBill.customerId) return null;
+    const customer = customers.find(c => c.id === successBill.customerId);
+    return customer?.phone || null;
+  };
+
+  // Format phone number for WhatsApp (Sri Lanka +94)
+  const formatPhoneForWhatsApp = (phone: string | null): string => {
+    if (!phone) return '';
+    // Remove any spaces, dashes, or special characters
+    let cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    // If starts with 0, replace with +94
+    if (cleaned.startsWith('0')) {
+      cleaned = '+94' + cleaned.substring(1);
+    }
+    // If doesn't start with +, add +94
+    if (!cleaned.startsWith('+')) {
+      cleaned = '+94' + cleaned;
+    }
+    return cleaned;
+  };
+
   const shareOnWhatsApp = () => {
     if (!successBill) return;
+
+    const customerPhone = getCustomerPhone();
+    const formattedPhone = formatPhoneForWhatsApp(customerPhone);
+
+    // Build the bill message with shop logo and details
     const text = `*WR Smile & Supplies*\n` +
+      `\n` +
       `Bill No: ${successBill.invoiceNumber}\n` +
       `Date: ${new Date(successBill.date).toLocaleDateString()}\n` +
+      `Customer: ${successBill.customerName}\n` +
       `------------------------\n` +
-      successBill.items.map(i => `${i.name} x${i.quantity} = ${i.price * i.quantity}`).join('\n') +
+      successBill.items.map(i => `${i.name} x${i.quantity} = LKR ${(i.price * i.quantity).toLocaleString()}`).join('\n') +
       `\n------------------------\n` +
-      `*Total: LKR ${successBill.total}*`;
-    
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      `Subtotal: LKR ${successBill.subtotal.toLocaleString()}\n` +
+      `Discount: LKR ${successBill.discount.toLocaleString()}\n` +
+      `*Total: LKR ${successBill.total.toLocaleString()}*\n` +
+      `\n` +
+      `Payment: ${successBill.paymentType}\n` +
+      `------------------------\n` +
+      `Shop Contact: ${SHOP_CONTACT}\n` +
+      `WhatsApp: ${SHOP_WHATSAPP_NUMBER}\n` +
+      `\n` +
+      `Shop Logo: ${SHOP_LOGO_URL}\n` +
+      `\n` +
+      `Thank you for shopping with us!`;
+
+    // If customer has phone, send directly to their number
+    // Otherwise, open WhatsApp with text but no recipient
+    const whatsappUrl = formattedPhone
+      ? `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+    window.open(whatsappUrl, '_blank');
   };
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -198,8 +250,16 @@ export const BillingPOS: React.FC = () => {
         {/* Print-friendly bill section (hidden on screen, visible on print) */}
         <div className="hidden print:block print:p-8 print:bg-white print:text-black print:max-w-lg print:mx-auto print:rounded print:shadow-lg">
           <div className="text-center mb-4">
+            {/* Shop Logo */}
+            <img
+              src={SHOP_LOGO_URL}
+              alt="WR Smile & Supplies Logo"
+              className="h-16 mx-auto mb-2"
+              style={{ maxHeight: '64px', objectFit: 'contain' }}
+            />
             <h2 className="text-2xl font-bold">WR Smile & Supplies</h2>
-            <div className="text-sm">Shop Contact: 0719336848</div>
+            <div className="text-sm">Shop Contact: {SHOP_CONTACT}</div>
+            <div className="text-sm">WhatsApp: {SHOP_WHATSAPP_NUMBER}</div>
             <div className="text-xs">Cloud Edition v1.0</div>
           </div>
           <div className="flex justify-between mb-2 text-sm">
@@ -207,6 +267,7 @@ export const BillingPOS: React.FC = () => {
             <div>Date: <b>{new Date(successBill.date).toLocaleDateString()}</b></div>
           </div>
           <div className="mb-2 text-sm">Customer: <b>{successBill.customerName}</b></div>
+          <div className="mb-2 text-sm">Payment Type: <b>{successBill.paymentType}</b></div>
           <table className="w-full text-xs border-t border-b border-black mb-2">
             <thead>
               <tr className="border-b border-black">
@@ -239,11 +300,21 @@ export const BillingPOS: React.FC = () => {
             <span>Total:</span>
             <span>LKR {successBill.total.toLocaleString()}</span>
           </div>
-          <div className="text-center text-xs mt-4">Thank you for your purchase!</div>
+          <div className="text-center text-xs mt-4">
+            <p>Thank you for your purchase!</p>
+            <p className="mt-2">Contact us on WhatsApp: {SHOP_WHATSAPP_NUMBER}</p>
+          </div>
         </div>
 
         {/* On-screen success card (hidden on print) */}
         <GlassCard className="max-w-md mx-auto text-center py-12 print:hidden">
+          {/* Shop Logo */}
+          <img
+            src={SHOP_LOGO_URL}
+            alt="WR Smile & Supplies Logo"
+            className="h-20 mx-auto mb-4"
+            style={{ maxHeight: '80px', objectFit: 'contain' }}
+          />
           <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShoppingCart size={32} />
           </div>
