@@ -387,9 +387,14 @@ export const BillingPOS: React.FC = () => {
                        <span className="w-4 text-center text-white font-bold">{item.quantity}</span>
                        <button onClick={() => updateQuantity(idx, item.quantity + 1)} className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center">+</button>
                     </div>
-                    <label className="flex items-center gap-1 cursor-pointer select-none">
-                      <input type="checkbox" checked={item.warranty} onChange={() => toggleWarranty(idx)} className="rounded bg-white/10 border-white/20" />
-                      Warranty
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={item.warranty}
+                        onChange={() => toggleWarranty(idx)}
+                        className="w-4 h-4 accent-blue-500 cursor-pointer"
+                      />
+                      <span className={item.warranty ? 'text-blue-300' : ''}>Warranty</span>
                     </label>
                     <button onClick={() => removeFromCart(idx)} className="text-red-400 hover:text-red-300"><Trash size={14}/></button>
                   </div>
