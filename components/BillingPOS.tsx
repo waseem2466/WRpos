@@ -179,14 +179,35 @@ export const BillingPOS: React.FC = () => {
 
   const shareOnWhatsApp = () => {
     if (!successBill) return;
-    const text = `*WR Smile & Supplies*\n` +
-      `Bill No: ${successBill.invoiceNumber}\n` +
-      `Date: ${new Date(successBill.date).toLocaleDateString()}\n` +
-      `------------------------\n` +
-      successBill.items.map(i => `${i.name} x${i.quantity} = ${i.price * i.quantity}`).join('\n') +
-      `\n------------------------\n` +
-      `*Total: LKR ${successBill.total}*`;
-    
+
+    // Build warranty items list
+    const warrantyItems = successBill.items.filter(i => i.warranty);
+    const warrantyText = warrantyItems.length > 0
+      ? `\n📋 *WARRANTY ITEMS:*\n${warrantyItems.map(i => `  ✓ ${i.name}`).join('\n')}\n`
+      : '';
+
+    const text = `━━━━━━━━━━━━━━━━━━━━━
+    *WR SMILE & SUPPLIES*
+━━━━━━━━━━━━━━━━━━━━━
+📄 Bill No: ${successBill.invoiceNumber}
+📅 Date: ${new Date(successBill.date).toLocaleDateString()}
+🕐 Time: ${new Date(successBill.date).toLocaleTimeString()}
+👤 Customer: ${successBill.customerName}
+💳 Payment: ${successBill.paymentType}
+━━━━━━━━━━━━━━━━━━━━━
+
+*ITEMS:*
+${successBill.items.map(i => `▸ ${i.name}${i.warranty ? ' 🛡️' : ''}
+   ${i.quantity} × LKR ${i.price.toLocaleString()} = *LKR ${(i.price * i.quantity).toLocaleString()}*`).join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━
+Subtotal: LKR ${successBill.subtotal.toLocaleString()}${successBill.discount > 0 ? `\nDiscount: -LKR ${successBill.discount.toLocaleString()}` : ''}
+*💰 TOTAL: LKR ${successBill.total.toLocaleString()}*
+━━━━━━━━━━━━━━━━━━━━━
+${warrantyText}
+📞 Contact: 0719336848
+Thank you for shopping with us! 🙏`;
+
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -196,20 +217,47 @@ export const BillingPOS: React.FC = () => {
     return (
       <>
         {/* Print-friendly bill section (hidden on screen, visible on print) */}
-        <div className="hidden print:block print:p-8 print:bg-white print:text-black print:max-w-lg print:mx-auto print:rounded print:shadow-lg">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold">WR Smile & Supplies</h2>
-            <div className="text-sm">Shop Contact: 0719336848</div>
-            <div className="text-xs">Cloud Edition v1.0</div>
+        <div className="hidden print:block print:p-6 print:bg-white print:text-black print:max-w-md print:mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
+          {/* Header with Logo */}
+          <div className="text-center mb-4 pb-3" style={{ borderBottom: '2px solid #333' }}>
+            <img
+              src="https://res.cloudinary.com/wrsmile/image/upload/v1765612669/wr_smile_supplies_products/hkp1yeb4c2vcjxzvsenh.webp"
+              alt="WR Smile & Supplies Logo"
+              className="mx-auto mb-2"
+              style={{ maxHeight: '60px', objectFit: 'contain' }}
+            />
+            <h2 className="text-xl font-bold m-0">WR Smile & Supplies</h2>
+            <div className="text-xs text-gray-600">Contact: 0719336848</div>
           </div>
-          <div className="flex justify-between mb-2 text-sm">
-            <div>Bill No: <b>{successBill.invoiceNumber}</b></div>
-            <div>Date: <b>{new Date(successBill.date).toLocaleDateString()}</b></div>
+
+          {/* Bill Info */}
+          <div className="mb-3 pb-2" style={{ borderBottom: '1px dashed #ccc' }}>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Bill No:</span>
+              <span className="font-bold">{successBill.invoiceNumber}</span>
+            </div>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Date:</span>
+              <span className="font-bold">{new Date(successBill.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Time:</span>
+              <span className="font-bold">{new Date(successBill.date).toLocaleTimeString()}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span>Customer:</span>
+              <span className="font-bold">{successBill.customerName}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span>Payment:</span>
+              <span className="font-bold">{successBill.paymentType}</span>
+            </div>
           </div>
-          <div className="mb-2 text-sm">Customer: <b>{successBill.customerName}</b></div>
-          <table className="w-full text-xs border-t border-b border-black mb-2">
+
+          {/* Items Table */}
+          <table className="w-full text-xs mb-3" style={{ borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-black">
+              <tr style={{ borderBottom: '1px solid #333' }}>
                 <th className="py-1 text-left">Item</th>
                 <th className="py-1 text-center">Qty</th>
                 <th className="py-1 text-right">Price</th>
@@ -218,8 +266,11 @@ export const BillingPOS: React.FC = () => {
             </thead>
             <tbody>
               {successBill.items.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="py-1">{item.name}</td>
+                <tr key={idx} style={{ borderBottom: '1px dashed #eee' }}>
+                  <td className="py-1">
+                    {item.name}
+                    {item.warranty && <span className="text-green-700 ml-1">(W)</span>}
+                  </td>
                   <td className="py-1 text-center">{item.quantity}</td>
                   <td className="py-1 text-right">{item.price.toLocaleString()}</td>
                   <td className="py-1 text-right">{(item.price * item.quantity).toLocaleString()}</td>
@@ -227,19 +278,40 @@ export const BillingPOS: React.FC = () => {
               ))}
             </tbody>
           </table>
-          <div className="flex justify-between text-sm mb-1">
-            <span>Subtotal:</span>
-            <span>LKR {successBill.subtotal.toLocaleString()}</span>
+
+          {/* Totals */}
+          <div className="mb-3 pb-2" style={{ borderBottom: '1px dashed #ccc' }}>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Subtotal:</span>
+              <span>LKR {successBill.subtotal.toLocaleString()}</span>
+            </div>
+            {successBill.discount > 0 && (
+              <div className="flex justify-between text-xs mb-1 text-red-600">
+                <span>Discount:</span>
+                <span>- LKR {successBill.discount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-bold pt-1" style={{ borderTop: '1px solid #333' }}>
+              <span>TOTAL:</span>
+              <span>LKR {successBill.total.toLocaleString()}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-sm mb-1">
-            <span>Discount:</span>
-            <span>LKR {successBill.discount.toLocaleString()}</span>
+
+          {/* Warranty Notice - only if any item has warranty */}
+          {successBill.items.some(item => item.warranty) && (
+            <div className="mb-3 p-2 text-xs" style={{ backgroundColor: '#f0f9f0', border: '1px solid #4ade80', borderRadius: '4px' }}>
+              <div className="font-bold text-green-700 mb-1">Warranty Items:</div>
+              {successBill.items.filter(item => item.warranty).map((item, idx) => (
+                <div key={idx} className="text-green-800">- {item.name}</div>
+              ))}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="text-center text-xs text-gray-500 mt-3 pt-2" style={{ borderTop: '1px dashed #ccc' }}>
+            <div className="font-bold mb-1">Thank you for your purchase!</div>
+            <div>Please keep this bill for warranty claims</div>
           </div>
-          <div className="flex justify-between text-lg font-bold border-t border-black pt-1 mb-2">
-            <span>Total:</span>
-            <span>LKR {successBill.total.toLocaleString()}</span>
-          </div>
-          <div className="text-center text-xs mt-4">Thank you for your purchase!</div>
         </div>
 
         {/* On-screen success card (hidden on print) */}
