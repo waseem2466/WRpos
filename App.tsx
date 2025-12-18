@@ -14,6 +14,7 @@ function App() {
   const [isDbReady, setIsDbReady] = useState(false);
   const [dbError, setDbError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     initApp();
@@ -75,7 +76,10 @@ function App() {
 
   const NavItem = ({ view, icon: Icon, label }: { view: View, icon: any, label: string }) => (
     <button
-      onClick={() => setCurrentView(view)}
+      onClick={() => {
+        setCurrentView(view);
+        setSidebarOpen(false);
+      }}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
         currentView === view 
           ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' 
@@ -88,23 +92,30 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen flex text-gray-100 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen flex flex-col md:flex-row text-gray-100 font-sans selection:bg-blue-500/30">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden flex items-center justify-between bg-black/60 px-4 py-3 border-b border-white/10 z-50">
+        <button onClick={() => setSidebarOpen(true)} className="text-white focus:outline-none">
+          <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">WR Smile POS</h1>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-white/20 shadow-lg"></div>
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-64 fixed h-full bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col z-50">
-        <div className="mb-10 px-2">
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col z-50 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:flex`}> 
+        <div className="mb-10 px-2 flex items-center justify-between">
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
             WR Smile POS
           </h1>
-          <p className="text-xs text-gray-500 mt-1">Cloud Edition v1.0</p>
+          <button className="md:hidden text-white text-2xl" onClick={() => setSidebarOpen(false)}>&times;</button>
         </div>
-
         <nav className="space-y-2 flex-1">
           <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem view="billing" icon={ShoppingCart} label="Billing POS" />
           <NavItem view="products" icon={Package} label="Inventory" />
           <NavItem view="customers" icon={Users} label="Customers" />
         </nav>
-
         <div className="pt-6 border-t border-white/10 space-y-2">
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 transition-colors">
             <Settings size={20} />
@@ -121,8 +132,8 @@ function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8 relative">
-        <header className="flex justify-between items-center mb-8">
+      <main className="flex-1 p-4 md:p-8 relative md:ml-64">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">
               {currentView.charAt(0).toUpperCase() + currentView.slice(1)}
@@ -137,7 +148,6 @@ function App() {
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-white/20 shadow-lg"></div>
           </div>
         </header>
-
         {renderView()}
       </main>
     </div>

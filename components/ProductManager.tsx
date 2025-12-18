@@ -13,7 +13,8 @@ export const ProductManager: React.FC = () => {
     marginType: MarginType.FIXED,
     transportCost: 0,
     marginValue: 0,
-    cost: 0
+    cost: 0,
+    customPrice: ''
   });
 
   useEffect(() => {
@@ -30,22 +31,22 @@ export const ProductManager: React.FC = () => {
     const transport = Number(data.transportCost) || 0;
     const totalCost = cost + transport;
     const margin = Number(data.marginValue) || 0;
-    
     let selling = 0;
-    if (data.marginType === MarginType.FIXED) {
+    if (data.customPrice && !isNaN(Number(data.customPrice)) && Number(data.customPrice) > 0) {
+      selling = Number(data.customPrice);
+    } else if (data.marginType === MarginType.FIXED) {
       selling = totalCost + margin;
     } else {
       selling = totalCost + (totalCost * (margin / 100));
     }
-
-    return { totalCost, price: Math.ceil(selling) }; // Round up for cleaner prices
+    return { totalCost, price: Math.ceil(selling) };
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const updated = { ...formData, [name]: name === 'marginType' || name === 'name' || name === 'category' ? value : Number(value) };
     
-    if (['cost', 'transportCost', 'marginType', 'marginValue'].includes(name)) {
+    if (["cost", "transportCost", "marginType", "marginValue", "customPrice"].includes(name)) {
       const { totalCost, price } = calculatePricing(updated);
       updated.totalCost = totalCost;
       updated.price = price;
@@ -143,7 +144,15 @@ export const ProductManager: React.FC = () => {
                 value={formData.marginValue || ''} 
                 onChange={handleChange} 
               />
-               <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
+              <GlassInput 
+                name="customPrice"
+                label="Custom Selling Price (LKR)"
+                type="number"
+                value={formData.customPrice || ''}
+                onChange={handleChange}
+                placeholder="Override calculated price"
+              />
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
                 <span className="text-gray-400">Selling Price:</span>
                 <span className="text-green-400 font-mono font-bold text-lg">LKR {formData.price?.toFixed(2) || '0.00'}</span>
               </div>

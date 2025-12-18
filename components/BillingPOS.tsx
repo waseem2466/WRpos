@@ -6,6 +6,9 @@ import { db, generateId } from '../services/mockDb';
 import { Product, Customer, BillItem, Bill } from '../types';
 import { Search, ShoppingCart, Trash, User, Printer, Share2, Plus, X, Save, PackagePlus } from 'lucide-react';
 
+const SHOP_LOGO_URL = "https://res.cloudinary.com/wrsmile/image/upload/v1765612669/wr_smile_supplies_products/hkp1yeb4c2vcjxzvsenh.webp";
+const SHOP_WHATSAPP = "+94";
+
 export const BillingPOS: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -44,7 +47,7 @@ export const BillingPOS: React.FC = () => {
     }
 
     if (existing) {
-      setCart(cart.map(item => item.productId === product.id ? { ...item, quantity: item.quantity + 1, profit: (item.price - item.cost) * (item.quantity + 1) } : item));
+      setCart(cart.map(item => item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
       const item: BillItem = {
         productId: product.id,
@@ -52,7 +55,6 @@ export const BillingPOS: React.FC = () => {
         quantity: 1,
         cost: product.totalCost,
         price: product.price,
-        profit: product.price - product.totalCost,
         warranty: false
       };
       setCart([...cart, item]);
@@ -73,7 +75,6 @@ export const BillingPOS: React.FC = () => {
       quantity: quantity,
       cost: cost,
       price: price,
-      profit: (price - cost) * quantity,
       warranty: false
     };
 
@@ -123,7 +124,6 @@ export const BillingPOS: React.FC = () => {
 
     const newCart = [...cart];
     newCart[index].quantity = qty;
-    newCart[index].profit = (newCart[index].price - newCart[index].cost) * qty;
     setCart(newCart);
   };
 
@@ -136,12 +136,11 @@ export const BillingPOS: React.FC = () => {
   const calculateTotals = () => {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalCost = cart.reduce((sum, item) => sum + (item.cost * item.quantity), 0);
-    const totalProfit = cart.reduce((sum, item) => sum + item.profit, 0);
     const total = subtotal - discount;
-    return { subtotal, totalCost, totalProfit, total };
+    return { subtotal, totalCost, total };
   };
 
-  const { subtotal, totalCost, totalProfit, total } = calculateTotals();
+  const { subtotal, totalCost, total } = calculateTotals();
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -161,7 +160,6 @@ export const BillingPOS: React.FC = () => {
       items: cart,
       subtotal,
       totalCost,
-      totalProfit,
       discount,
       total,
       paymentType
@@ -179,15 +177,23 @@ export const BillingPOS: React.FC = () => {
 
   const shareOnWhatsApp = () => {
     if (!successBill) return;
+    // Find customer phone if available
+    const customer = customers.find(c => c.id === successBill.customerId);
+    const customerPhone = customer && customer.phone ? customer.phone : "";
     const text = `*WR Smile & Supplies*\n` +
+      `![logo](${SHOP_LOGO_URL})\n` +
       `Bill No: ${successBill.invoiceNumber}\n` +
       `Date: ${new Date(successBill.date).toLocaleDateString()}\n` +
       `------------------------\n` +
       successBill.items.map(i => `${i.name} x${i.quantity} = ${i.price * i.quantity}`).join('\n') +
       `\n------------------------\n` +
-      `*Total: LKR ${successBill.total}*`;
-    
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      `*Total: LKR ${successBill.total}*\n` +
+      `Shop WhatsApp: ${SHOP_WHATSAPP}`;
+    // WhatsApp API: send to customer if phone exists, else open generic
+    const waUrl = customerPhone
+      ? `https://wa.me/${customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
   };
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -198,8 +204,9 @@ export const BillingPOS: React.FC = () => {
         {/* Print-friendly bill section (hidden on screen, visible on print) */}
         <div className="hidden print:block print:p-8 print:bg-white print:text-black print:max-w-lg print:mx-auto print:rounded print:shadow-lg">
           <div className="text-center mb-4">
+            <img src={SHOP_LOGO_URL} alt="Shop Logo" className="mx-auto mb-2 w-20 h-20 object-contain rounded-full border border-gray-200" />
             <h2 className="text-2xl font-bold">WR Smile & Supplies</h2>
-            <div className="text-sm">Shop Contact: 0719336848</div>
+            <div className="text-sm">Shop WhatsApp: {SHOP_WHATSAPP}</div>
             <div className="text-xs">Cloud Edition v1.0</div>
           </div>
           <div className="flex justify-between mb-2 text-sm">
@@ -267,96 +274,94 @@ export const BillingPOS: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[calc(100vh-100px)]">
-      {/* Product Selection */}
+      {/* Billing Area - Search, Suggestions, and Manual Add */}
       <div className="lg:col-span-2 flex flex-col gap-4 h-full">
         <GlassCard className="flex-1 flex flex-col overflow-hidden">
           <div className="mb-4 sticky top-0 bg-transparent z-10 space-y-3">
-             <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-                  <input
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-blue-500/50"
-                    placeholder="Search products..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-                <button 
-                  onClick={() => setIsCustomItemMode(!isCustomItemMode)}
-                  className={`px-4 rounded-xl border border-white/10 flex items-center gap-2 transition-all ${isCustomItemMode ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-                >
-                   {isCustomItemMode ? <X size={20} /> : <PackagePlus size={20} />}
-                   <span className="hidden sm:inline">{isCustomItemMode ? 'Cancel' : 'Custom Item'}</span>
-                </button>
-             </div>
-
-             {/* Custom Item Form Overlay */}
-             {isCustomItemMode && (
-                <form onSubmit={addCustomItemToCart} className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl animate-fade-in">
-                  <h4 className="text-sm font-bold text-blue-300 mb-3 uppercase flex items-center gap-2">
-                    <PackagePlus size={16}/> Manual Entry
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                     <GlassInput 
-                        placeholder="Item Name" 
-                        value={customItem.name}
-                        onChange={e => setCustomItem({...customItem, name: e.target.value})}
-                        className="md:col-span-1"
-                        autoFocus
-                        required
-                     />
-                     <GlassInput 
-                        placeholder="Price (LKR)" 
-                        type="number"
-                        value={customItem.price}
-                        onChange={e => setCustomItem({...customItem, price: e.target.value})}
-                        required
-                     />
-                     <GlassInput 
-                        placeholder="Cost (Optional)" 
-                        type="number"
-                        title="Enter Cost Price for accurate profit calculation"
-                        value={customItem.cost}
-                        onChange={e => setCustomItem({...customItem, cost: e.target.value})}
-                     />
-                     <div className="flex gap-2">
-                        <GlassInput 
-                            placeholder="Qty" 
-                            type="number"
-                            value={customItem.quantity}
-                            onChange={e => setCustomItem({...customItem, quantity: Number(e.target.value)})}
-                            className="w-20"
-                        />
-                        <GlassButton type="submit" className="flex-1">Add</GlassButton>
-                     </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+                <input
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-blue-500/50"
+                  placeholder="Search products (type to add manually)"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  autoComplete="off"
+                />
+                {/* Product Suggestions Dropdown */}
+                {search && products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).length > 0 && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white/90 text-black rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto border border-blue-500/20">
+                    {products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 8).map(product => (
+                      <button
+                        key={product.id}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-100 border-b last:border-b-0 border-blue-100 text-sm flex justify-between items-center"
+                        onClick={() => {
+                          addToCart(product);
+                          setSearch('');
+                        }}
+                        type="button"
+                        disabled={product.stock <= 0}
+                      >
+                        <span>{product.name}</span>
+                        <span className="font-mono text-xs text-gray-500">LKR {product.price}</span>
+                      </button>
+                    ))}
                   </div>
-                </form>
-             )}
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto p-1">
-            {filteredProducts.map(product => (
-              <button
-                key={product.id}
-                onClick={() => addToCart(product)}
-                disabled={product.stock <= 0}
-                className="flex flex-col text-left p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group relative"
+                )}
+              </div>
+              <button 
+                onClick={() => setIsCustomItemMode(!isCustomItemMode)}
+                className={`px-4 rounded-xl border border-white/10 flex items-center gap-2 transition-all ${isCustomItemMode ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
               >
-                <span className="font-semibold text-sm line-clamp-2 h-10">{product.name}</span>
-                <span className="text-xs text-gray-400 mt-1">{product.category}</span>
-                <div className="mt-auto pt-3 flex justify-between items-end">
-                  <span className="text-green-400 font-bold font-mono">LKR {product.price}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${product.stock > 10 ? 'bg-gray-700 text-gray-300' : 'bg-red-500/20 text-red-300'}`}>
-                    Qty: {product.stock}
-                  </span>
-                </div>
-                {/* Hover effect to show add icon */}
-                <div className="absolute inset-0 bg-blue-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Plus className="text-white drop-shadow-md" />
-                </div>
+                {isCustomItemMode ? <X size={20} /> : <PackagePlus size={20} />}
+                <span className="hidden sm:inline">{isCustomItemMode ? 'Cancel' : 'Custom Item'}</span>
               </button>
-            ))}
+            </div>
+
+            {/* Custom Item Form Overlay */}
+            {isCustomItemMode && (
+              <form onSubmit={addCustomItemToCart} className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl animate-fade-in">
+                <h4 className="text-sm font-bold text-blue-300 mb-3 uppercase flex items-center gap-2">
+                  <PackagePlus size={16}/> Manual Entry
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <GlassInput 
+                    placeholder="Item Name" 
+                    value={customItem.name}
+                    onChange={e => setCustomItem({...customItem, name: e.target.value})}
+                    className="md:col-span-1"
+                    autoFocus
+                    required
+                  />
+                  <GlassInput 
+                    placeholder="Price (LKR)" 
+                    type="number"
+                    value={customItem.price}
+                    onChange={e => setCustomItem({...customItem, price: e.target.value})}
+                    required
+                  />
+                  <GlassInput 
+                    placeholder="Cost (Optional)" 
+                    type="number"
+                    title="Enter Cost Price for accurate profit calculation"
+                    value={customItem.cost}
+                    onChange={e => setCustomItem({...customItem, cost: e.target.value})}
+                  />
+                  <div className="flex gap-2">
+                    <GlassInput 
+                      placeholder="Qty" 
+                      type="number"
+                      value={customItem.quantity}
+                      onChange={e => setCustomItem({...customItem, quantity: Number(e.target.value)})}
+                      className="w-20"
+                    />
+                    <GlassButton type="submit" className="flex-1">Add</GlassButton>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
+          {/* Product grid removed as per requirements, suggestions added */}
         </GlassCard>
       </div>
 
