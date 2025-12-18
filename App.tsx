@@ -94,7 +94,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row text-gray-100 font-sans selection:bg-blue-500/30">
       {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between bg-black/60 px-4 py-3 border-b border-white/10 z-50">
+      <div className="md:hidden flex items-center justify-between bg-black/60 px-4 py-3 border-b border-white/10 z-50 print:hidden">
         <button onClick={() => setSidebarOpen(true)} className="text-white focus:outline-none">
           <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
@@ -103,7 +103,7 @@ function App() {
       </div>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col z-50 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:flex`}> 
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col z-50 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:flex print:hidden`}> 
         <div className="mb-10 px-2 flex items-center justify-between">
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
             WR Smile POS
@@ -132,8 +132,8 @@ function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 relative md:ml-64">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <main className="flex-1 p-4 md:p-8 relative md:ml-64 print:ml-0 print:p-0">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
           <div>
             <h2 className="text-2xl font-bold text-white">
               {currentView.charAt(0).toUpperCase() + currentView.slice(1)}

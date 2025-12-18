@@ -202,7 +202,7 @@ export const BillingPOS: React.FC = () => {
     return (
       <>
         {/* Print-friendly bill section (hidden on screen, visible on print) */}
-        <div className="hidden print:block print:p-8 print:bg-white print:text-black print:max-w-lg print:mx-auto print:rounded print:shadow-lg">
+        <div className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:text-black print:p-8">
           <div className="text-center mb-4">
             <img src={SHOP_LOGO_URL} alt="Shop Logo" className="mx-auto mb-2 w-20 h-20 object-contain rounded-full border border-gray-200" />
             <h2 className="text-2xl font-bold">WR Smile & Supplies</h2>
@@ -273,7 +273,7 @@ export const BillingPOS: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[calc(100vh-100px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[calc(100vh-100px)] print:hidden">
       {/* Billing Area - Search, Suggestions, and Manual Add */}
       <div className="lg:col-span-2 flex flex-col gap-4 h-full">
         <GlassCard className="flex-1 flex flex-col overflow-hidden">
